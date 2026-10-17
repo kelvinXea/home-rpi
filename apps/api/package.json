@@ -1,0 +1,26 @@
+{
+  "name": "@home-rpi/api",
+  "version": "0.0.0",
+  "private": true,
+  "description": "API Fastify + SQLite para home-rpi (fase 3)",
+  "type": "module",
+  "main": "./dist/server.js",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "node --watch src/server.ts",
+    "start": "node dist/server.js",
+    "test": "node --test dist/test/*.js"
+  },
+  "dependencies": {
+    "@fastify/type-provider-typebox": "6.3.0",
+    "@home-rpi/contracts": "workspace:*",
+    "ajv-formats": "3.0.1",
+    "fastify": "5.12.7",
+    "sqlite3": "5.1.1",
+    "typebox": "1.4.1"
+  },
+  "devDependencies": {
+    "@types/node": "24.19.2",
+    "typescript": "7.0.2"
+  }
+}

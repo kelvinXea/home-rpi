@@ -12,9 +12,10 @@ Monorepo pnpm para gestionar un Raspberry Pi desde la red local:
 - API Fastify + SQLite (fases 3–4).
 - `docker/` → despliegue Docker (fase 5).
 
-Estado fase 2: dos apps Angular de scaffold sin lógica de negocio — `menu-order-generator`
-(puerto 4200) y `rpi-vpn-manager` (puerto 4201). No hay API, VPN real ni backend todavía:
-no inventar apps, scripts, lógica ni estructura que no exista.
+Estado fase 3: dos apps Angular de scaffold sin lógica de negocio — `menu-order-generator`
+(puerto 4200) y `rpi-vpn-manager` (puerto 4201); más la API Fastify + SQLite en `apps/api`
+(única ruta `GET /api/health`) y el paquete compartido `packages/contracts`. Sigue sin haber
+VPN real ni lógica de negocio: no inventar apps, scripts, lógica ni estructura que no exista.
 
 ## Entorno verificado (a fecha 2026-10-17)
 
@@ -30,18 +31,20 @@ no inventar apps, scripts, lógica ni estructura que no exista.
   sistema**: activarlo por shell (receta abajo). pnpm 12.14.0 está instalado global bajo el
   prefix de ese Node y fijado vía `packageManager` en package.json.
 
-## Estructura y responsabilidades (estado fase 2)
+## Estructura y responsabilidades (estado fase 3)
 
 ```
 home-rpi/
 ├── apps/menu-order-generator/    # @home-rpi: Angular 22.2.3 + Bootstrap 5.3.8/Sass; ng serve en 4200
 ├── apps/rpi-vpn-manager/         # idem (scaffold espejo); ng serve en 4201 (angular.json)
+├── apps/api/                     # @home-rpi/api: Fastify 5.12.7 + sqlite3 5.1.1; src→dist con tsc
 ├── packages/.gitkeep             # librerías TS compartidas (sin uso aún)
+├── packages/contracts/           # @home-rpi/contracts: contrato HealthResponse (TypeBox); ESM+types en dist
 ├── docker/.gitkeep               # Dockerfiles/compose futuros (fuera de alcance fase 5)
 ├── package.json                  # @home-rpi/root: scripts, engines.node=24.22.0,
 │                                 #   packageManager=pnpm@12.14.0, devDeps exactas
 ├── pnpm-workspace.yaml           # packages: apps/* + packages/*; allowBuilds (postinstall
-│                                 #   aprobados); minimumReleaseAgeExclude: eslint@10.13.0
+│                                 #   aprobados); minimumReleaseAgeExclude: eslint@10.13.0 + typebox@1.4.1
 ├── tsconfig.base.json     # opciones estrictas compartidas, sin target/module
 ├── eslint.config.mjs      # flat config: @eslint/js recommended; linta .js/.mjs/.cjs
 ├── pnpm-lock.yaml         # v9.0, generado con pnpm 12.14.0 sobre Node v24.22.0
@@ -51,6 +54,26 @@ home-rpi/
 
 - `opencode.json` es configuración de sesión preexistente del entorno; no tocarla ni
   documentarla como parte del proyecto.
+
+## API y contratos (fase 3)
+
+Capas reales en `apps/api/src/`: `server.ts` (arranque: config → SQLite → migraciones → listen;
+cierre ordenado con onClose + SIGINT/SIGTERM, conexión cerrada una sola vez) → `app.ts`
+(rutas bajo `/api`, validación runtime de peticiones y respuestas vía TypeBox, error handler
+propio que no filtra errores de validación 400) → `db.ts` (wrapper promise sobre sqlite3;
+PRAGMAs `foreign_keys=1`, `journal_mode=WAL`, `busy_timeout=5000`) + `migrations.ts`.
+Aún sin capa de servicios ni tablas de dominio: la migración 0001 solo fija
+`PRAGMA user_version = 1` (mecanismo idempotente con tabla `schema_migrations`).
+
+- Contratos en `packages/contracts`: un único `HealthResponse` ({status, database, timestamp}).
+  Biblioteca de schemas elegida: **TypeBox** — es el type provider oficial de Fastify
+  (`@fastify/type-provider-typebox`), así los schemas se validan sin convertir a JSON Schema;
+  con Zod haría falta un adaptador/conversión extra. El paquete no importa ni Angular ni
+  Fastify, y la API lo consume como dependencia `workspace:*`.
+- SQLite en WAL: genera ficheros laterales `<db>-wal`/`<db>-shm`; al cerrar se hace checkpoint.
+  En Docker (fase 5) hay que montar el **directorio** de datos, no un único fichero.
+- Quirk sqlite3 5.1.1 bajo ESM: es CJS y `Database` se asigna dinámicamente en el binding, así
+  cjs-module-lexer no expone named exports; importar por defecto y desestructurar (ver `db.ts`).
 
 ## Convenciones
 
@@ -66,7 +89,7 @@ home-rpi/
 5. Capas de la API: rutas → servicios → acceso a datos (SQLite). Las rutas no contienen
    lógica de negocio.
 6. pnpm 12 bloquea scripts postinstall por defecto; los paquetes aprobados (`@parcel/watcher`,
-   `esbuild`, `lmdb`, `msgpackr-extract`) quedan en el mapa `allowBuilds:` de
+   `esbuild`, `lmdb`, `msgpackr-extract`, `sqlite3`) quedan en el mapa `allowBuilds:` de
    pnpm-workspace.yaml, gestionado con `pnpm approve-builds <pkg> -y` (no editar a mano).
 
 ## Comandos verificados (ejecutados el 2026-10-17 con exit code 0)
@@ -83,11 +106,12 @@ a otro Node (se observó v20.20.2).
 
 | Comando | Resultado verificado |
 | --- | --- |
-| `pnpm install` | idempotente; "Scope: all 3 workspace projects"; lockfile pasa supply-chain policies |
-| `pnpm ls -r --depth -1` | lista los 3 proyectos (root + las dos apps) |
+| `pnpm install` | idempotente; "Scope: all 5 workspace projects"; "Already up to date" |
+| `pnpm ls -r --depth -1` | lista los 5 proyectos (root + las dos apps Angular + api + contracts) |
 | `pnpm lint` | `eslint .` linta el JS de la raíz sin errores |
-| `pnpm build` | compila las dos apps (`dist/<app>/` en cada una); warning no fatal Sass @import |
-| `pnpm test` | vitest en las dos apps: 2 archivos / 4 tests passed (incl. h1 exacto) |
+| `pnpm build` | compila los 4 proyectos con script (`tsc` en contracts y api; `ng build` en los frontends); warning no fatal Sass @import |
+| `pnpm test` | vitest en las dos apps: 2 archivos / 4 tests passed (incl. h1 exacto); node:test en `apps/api`: 13 tests passed (`node --test dist/test/*.js`) |
+| Arranque manual de la API compilada + `curl /api/health` | 200 `{"status":"ok","database":"ok"}` en 127.0.0.1:3000; SIGTERM → log "Recibido SIGTERM, cerrando la API" y exit 0; DB persistida con checkpoint WAL al cerrar; segundo proceso en el mismo puerto → error claro EADDRINUSE + exit 1 (fallo controlado verificado en vivo) |
 | `pnpm build:menu` / `build:vpn` | build por app vía `--filter @home-rpi/<nombre>`; exit 0 |
 | `pnpm dev:menu` / `dev:vpn` | `ng serve` en 4200 / 4201; verificado con curl y parada limpia del grupo |
 

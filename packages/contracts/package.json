@@ -1,0 +1,24 @@
+{
+  "name": "@home-rpi/contracts",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Contratos de API compartidos (TypeBox) para home-rpi",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "typebox": "1.4.1"
+  },
+  "devDependencies": {
+    "typescript": "7.0.2"
+  }
+}
