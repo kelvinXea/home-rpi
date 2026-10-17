@@ -108,7 +108,8 @@ sin haberlos ejecutado primero.
   puntuales de ficheros concretos.
 - Sin secretos en el repo (`.env*` está en .gitignore); no escribir credenciales ni tokens.
 - No tocar el host del sistema (servicios, `/boot`, paquetes del SO): solo esta carpeta.
-- **No hacer commits** (no existe git; ver Pendientes).
+- **No hacer commits** (el repo SÍ es git: un commit inicial en `main`; la política de
+  commits queda pendiente, ver Pendientes).
 
 ## Validación y documentación de cambios
 
@@ -140,5 +141,6 @@ anotar la diferencia en *Pendientes*.
    fuera del linting (eslint.config.mjs solo aplica @eslint/js recommended a .js/.mjs/.cjs).
 2. **Node v24.22.0 instalado vía nvm en la fase 1**: no es el default del sistema; los
    shells nuevos necesitan `nvm use` (receta de "Comandos verificados").
-3. **El repo no es git** (no hay `.git/`): inicializarlo y definir política de commits
-   queda pendiente de instrucción explícita.
+3. **Política de commits pendiente**: el repo SÍ es git ahora (un commit inicial en
+   `main`, árbol limpio salvo los cambios no commiteados de la sesión actual). Definir la
+   política de commits queda pendiente de instrucción explícita.
