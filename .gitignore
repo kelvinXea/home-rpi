@@ -1,0 +1,17 @@
+# Dependencias
+node_modules/
+
+# Artefactos de build / cache
+dist/
+.angular/
+.eslintcache
+
+# Datos locales (SQLite y compania)
+data/
+*.sqlite
+
+# Secretos / entorno
+.env
+.env.local
+.env.*.local
+opencode.json
