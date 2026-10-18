@@ -19,13 +19,13 @@ VPN real ni lógica de negocio: no inventar apps, scripts, lógica ni estructura
 
 ## Entorno verificado (a fecha 2026-10-17)
 
-| Elemento | Versión | Verificación |
-| --- | --- | --- |
-| Node | v24.22.0 | `node -v` con nvm activo; `.nvmrc`/`.node-version` = 24.22.0 |
-| pnpm | 12.14.0 | `pnpm -v`; latest estable en el momento (`npm view pnpm version`) |
-| typescript | 7.0.2 | devDep exacta raíz; specifier y resolución exactos en lockfile v9.0 |
-| eslint | 10.13.0 | idem |
-| @eslint/js | 10.0.1 | idem; peer `eslint: ^10.0.0` compatible con 10.13.0 (`npm view`) |
+| Elemento   | Versión  | Verificación                                                        |
+| ---------- | -------- | ------------------------------------------------------------------- |
+| Node       | v24.22.0 | `node -v` con nvm activo; `.nvmrc`/`.node-version` = 24.22.0        |
+| pnpm       | 12.14.0  | `pnpm -v`; latest estable en el momento (`npm view pnpm version`)   |
+| typescript | 7.0.2    | devDep exacta raíz; specifier y resolución exactos en lockfile v9.0 |
+| eslint     | 10.13.0  | idem                                                                |
+| @eslint/js | 10.0.1   | idem; peer `eslint: ^10.0.0` compatible con 10.13.0 (`npm view`)    |
 
 - Node v24.22.0 se instaló en la fase 1 con `nvm install 24.22.0`; **no es el default del
   sistema**: activarlo por shell (receta abajo). pnpm 12.14.0 está instalado global bajo el
@@ -104,16 +104,16 @@ nvm use --silent   # activa v24.22.0 (del .nvmrc); pnpm 12.14.0 queda en el PATH
 Quirk: no encadenar `node -v`/`pnpm ...` en la misma línea que `. nvm.sh`; puede resolver
 a otro Node (se observó v20.20.2).
 
-| Comando | Resultado verificado |
-| --- | --- |
-| `pnpm install` | idempotente; "Scope: all 5 workspace projects"; "Already up to date" |
-| `pnpm ls -r --depth -1` | lista los 5 proyectos (root + las dos apps Angular + api + contracts) |
-| `pnpm lint` | `eslint .` linta el JS de la raíz sin errores |
-| `pnpm build` | compila los 4 proyectos con script (`tsc` en contracts y api; `ng build` en los frontends); warning no fatal Sass @import |
-| `pnpm test` | vitest en las dos apps: 2 archivos / 4 tests passed (incl. h1 exacto); node:test en `apps/api`: 13 tests passed (`node --test dist/test/*.js`) |
+| Comando                                                  | Resultado verificado                                                                                                                                                                                                                                                        |
+| -------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pnpm install`                                           | idempotente; "Scope: all 5 workspace projects"; "Already up to date"                                                                                                                                                                                                        |
+| `pnpm ls -r --depth -1`                                  | lista los 5 proyectos (root + las dos apps Angular + api + contracts)                                                                                                                                                                                                       |
+| `pnpm lint`                                              | `eslint .` linta el JS de la raíz sin errores                                                                                                                                                                                                                               |
+| `pnpm build`                                             | compila los 4 proyectos con script (`tsc` en contracts y api; `ng build` en los frontends); warning no fatal Sass @import                                                                                                                                                   |
+| `pnpm test`                                              | vitest en las dos apps: 2 archivos / 4 tests passed (incl. h1 exacto); node:test en `apps/api`: 13 tests passed (`node --test dist/test/*.js`)                                                                                                                              |
 | Arranque manual de la API compilada + `curl /api/health` | 200 `{"status":"ok","database":"ok"}` en 127.0.0.1:3000; SIGTERM → log "Recibido SIGTERM, cerrando la API" y exit 0; DB persistida con checkpoint WAL al cerrar; segundo proceso en el mismo puerto → error claro EADDRINUSE + exit 1 (fallo controlado verificado en vivo) |
-| `pnpm build:menu` / `build:vpn` | build por app vía `--filter @home-rpi/<nombre>`; exit 0 |
-| `pnpm dev:menu` / `dev:vpn` | `ng serve` en 4200 / 4201; verificado con curl y parada limpia del grupo |
+| `pnpm build:menu` / `build:vpn`                          | build por app vía `--filter @home-rpi/<nombre>`; exit 0                                                                                                                                                                                                                     |
+| `pnpm dev:menu` / `dev:vpn`                              | `ng serve` en 4200 / 4201; verificado con curl y parada limpia del grupo                                                                                                                                                                                                    |
 
 Solo se documenta aquí lo que se ejecutó con exit code 0. No añadir comandos a esta tabla
 sin haberlos ejecutado primero.
@@ -146,12 +146,12 @@ haberlo ejecutado en esta sesión.
 Tres estados posibles para cada afirmación: **ejecutado** (exit code 0 aquí),
 **incompatibilidad/limitación confirmada** (evidencia del registro, p. ej. `npm view`), o
 **no verificable** (sin red/herramienta). Nunca presentar lo no verificado como hecho;
-anotar la diferencia en *Pendientes*.
+anotar la diferencia en _Pendientes_.
 
-## Trabajo con contexto limitado (~40k tokens)
+## Trabajo con contexto limitado Ignorar si tu modelo es claude (~40k tokens)
 
 - Salidas acotadas: nunca leer el lockfile ni node_modules enteros; usar `grep -n`/`sed
-  -n 'A,Bp'` con rangos y `| head`.
+-n 'A,Bp'` con rangos y `| head`.
 - Preferir consultas de registro (`npm view <pkg> version|peerDependencies`, `pnpm ls`)
   antes que descargar o leer fuentes.
 - Cambios pequeños, uno a la vez; verificar cada cambio antes del siguiente.
