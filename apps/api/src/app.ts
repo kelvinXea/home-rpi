@@ -1,7 +1,9 @@
 import Fastify, { type FastifyInstance } from "fastify";
 import { registerAjvFormats, TypeBoxValidatorCompiler } from "@fastify/type-provider-typebox";
-import { HealthResponse } from "@home-rpi/contracts";
 import type { SqliteDb } from "./db.ts";
+import { HealthRepository } from "./health/health.repository.ts";
+import { registerHealthRoutes } from "./health/health.routes.ts";
+import { HealthService } from "./health/health.service.ts";
 
 export interface BuildAppOptions {
   db: SqliteDb;
@@ -41,11 +43,13 @@ export function buildApp({ db, logLevel = "info" }: BuildAppOptions): FastifyIns
   // el resto se loguea en servidor y responde con un 500 genérico.
   app.setErrorHandler((err, request, reply) => {
     if (isValidationFailure(err)) {
+      // Sin err.message ni err.validation: exponen rutas de schema internas.
+      request.log.info({ validation: err.validation }, "Petición rechazada por validación");
       reply.status(400).send({
         statusCode: 400,
-        code: err.code ?? "FST_ERR_VALIDATION",
-        message: err.message,
-        details: err.validation,
+        code: "FST_ERR_VALIDATION",
+        error: "Bad Request",
+        message: "Petición inválida",
       });
       return;
     }
@@ -56,28 +60,7 @@ export function buildApp({ db, logLevel = "info" }: BuildAppOptions): FastifyIns
     reply.status(500).send({ statusCode: 500, error: "Internal Server Error" });
   });
 
-  app.get(
-    "/api/health",
-    { schema: { response: { 200: HealthResponse, 503: HealthResponse } } },
-    async (request, reply) => {
-      try {
-        // Chequeo real de la base: si no responde, el endpoint degrada.
-        await db.get("SELECT 1");
-        return { status: "ok", database: "ok", timestamp: new Date().toISOString() };
-      } catch (err) {
-        request.log.warn(
-          `Health check: base de datos no accesible (${
-            err instanceof Error ? err.message : String(err)
-          })`,
-        );
-        return reply.code(503).send({
-          status: "degraded",
-          database: "error",
-          timestamp: new Date().toISOString(),
-        });
-      }
-    },
-  );
+  registerHealthRoutes(app, new HealthService(new HealthRepository(db)));
 
   return app;
 }
