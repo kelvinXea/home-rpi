@@ -75,6 +75,27 @@ Aún sin capa de servicios ni tablas de dominio: la migración 0001 solo fija
 - Quirk sqlite3 5.1.1 bajo ESM: es CJS y `Database` se asigna dinámicamente en el binding, así
   cjs-module-lexer no expone named exports; importar por defecto y desestructurar (ver `db.ts`).
 
+## Docker Compose (fase 4) — escrito, NO ejecutado
+
+Docker no estaba instalado en el entorno de la fase 4 (`docker: command not found` en WSL),
+así que **ninguno de estos comandos se ha ejecutado**; solo se revisaron estáticamente
+(YAML parseado, `bash -n`). Lo ejecutado: `pnpm deploy --prod` de la API + arranque de
+`dist/server.js` con solo dependencias de producción, y existencia de las etiquetas base con
+soporte arm64 en el registro (`node:24.22.0-bookworm-slim`, `nginxinc/nginx-unprivileged:1.28-alpine`)
+y de los binarios sqlite3 5.1.1 `napi-v6` linux glibc/musl x64/arm64 (HTTP 200).
+
+- Topología: `api` (Node, sin puertos publicados, `expose 3000`) + `web` (nginx sin privilegios) que
+  sirve menu-order-generator en 8080 y rpi-vpn-manager en 8081 y hace proxy de `/api/` a `api:3000`.
+  Puertos del host en `.env` (`WEB_MENU_PORT`, `WEB_VPN_PORT`; plantilla `.env.example`).
+- Ficheros: `docker-compose.yml`, `docker/api.Dockerfile`, `docker/web.Dockerfile`,
+  `docker/nginx.conf`, `.dockerignore`, `scripts/integration-test.sh`.
+- Datos: volumen con nombre `api-data` (`home-rpi_api-data`) montado como directorio `/data`;
+  `DATABASE_PATH=/data/home-rpi.sqlite`. **`docker compose down -v` borra la base: no usarlo
+  sobre el proyecto real.** Nunca `docker system prune`.
+- Comandos (pendientes de verificar): `pnpm docker:up` (`up -d --build --wait`), `pnpm docker:down`
+  (sin `-v`), `pnpm test:integration` (proyecto aislado `home-rpi-it`, puertos 18080/18081 o
+  `IT_MENU_PORT`/`IT_VPN_PORT`; solo hace `down -v` sobre ese proyecto).
+
 ## Convenciones
 
 1. Los paquetes del workspace se llaman `@home-rpi/<nombre>` y son `"private": true`.

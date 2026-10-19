@@ -14,7 +14,10 @@
     "dev:menu": "pnpm --filter @home-rpi/menu-order-generator run start",
     "dev:vpn": "pnpm --filter @home-rpi/rpi-vpn-manager run start",
     "build:menu": "pnpm --filter @home-rpi/menu-order-generator run build",
-    "build:vpn": "pnpm --filter @home-rpi/rpi-vpn-manager run build"
+    "build:vpn": "pnpm --filter @home-rpi/rpi-vpn-manager run build",
+    "docker:up": "docker compose up -d --build --wait",
+    "docker:down": "docker compose down",
+    "test:integration": "bash scripts/integration-test.sh"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
