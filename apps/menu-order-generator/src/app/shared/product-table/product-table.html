@@ -1,0 +1,44 @@
+@if (products().length === 0) {
+  <p class="text-body-secondary mb-0">Este menú no tiene productos.</p>
+} @else {
+  <div role="table" aria-label="Productos del menú">
+    <div role="rowgroup" class="d-none d-sm-block">
+      <div role="row" class="row g-2 fw-semibold border-bottom pb-2 mx-0">
+        <div role="columnheader" class="col-sm-5">Producto</div>
+        <div role="columnheader" class="col-sm-2 text-end">Precio</div>
+        <div role="columnheader" class="col-sm-2 text-center">Cantidad</div>
+        <div role="columnheader" class="col-sm-3 text-end">Acciones</div>
+      </div>
+    </div>
+    <div role="rowgroup">
+      @for (p of products(); track $index) {
+        <div role="row" class="row g-2 align-items-center border-bottom py-2 mx-0">
+          <div role="rowheader" class="col-12 col-sm-5 name">{{ p.product }}</div>
+          <div role="cell" class="col-4 col-sm-2 text-sm-end">
+            <small class="d-block d-sm-none text-body-secondary">Precio</small>
+            {{ formatPrice()(p.price) }}
+          </div>
+          <div role="cell" class="col-3 col-sm-2 text-center fw-semibold" aria-live="polite">
+            <small class="d-block d-sm-none fw-normal text-body-secondary">Cantidad</small>
+            {{ quantities()[$index] ?? 0 }}
+          </div>
+          <div role="cell" class="col-5 col-sm-3 d-flex justify-content-end gap-1">
+            <button
+              type="button"
+              class="btn btn-danger qty-btn"
+              [disabled]="(quantities()[$index] ?? 0) === 0"
+              [attr.aria-label]="'Quitar una unidad de ' + p.product"
+              (click)="quantityChange.emit({ index: $index, delta: -1 })"
+            >−</button>
+            <button
+              type="button"
+              class="btn btn-success qty-btn"
+              [attr.aria-label]="'Añadir una unidad de ' + p.product"
+              (click)="quantityChange.emit({ index: $index, delta: 1 })"
+            >+</button>
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+}

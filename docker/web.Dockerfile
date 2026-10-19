@@ -2,7 +2,7 @@
 ARG NODE_IMAGE=node:24.22.0-bookworm-slim
 ARG NGINX_IMAGE=nginxinc/nginx-unprivileged:1.28-alpine
 
-# ---- build: compila ambos frontends ----
+# ---- build: compila contracts y ambos frontends ----
 FROM ${NODE_IMAGE} AS build
 WORKDIR /repo
 ARG PNPM_VERSION=12.14.0
@@ -17,9 +17,12 @@ RUN test "$(pnpm -v)" = "$(node -p "require('./package.json').packageManager.spl
  && pnpm install --frozen-lockfile \
       --filter "@home-rpi/menu-order-generator..." --filter "@home-rpi/rpi-vpn-manager..."
 
+# contracts se compila antes: menu-order-generator importa sus tipos desde dist/ (import type).
+COPY packages/contracts packages/contracts
 COPY apps/menu-order-generator apps/menu-order-generator
 COPY apps/rpi-vpn-manager apps/rpi-vpn-manager
-RUN pnpm --filter @home-rpi/menu-order-generator build \
+RUN pnpm --filter @home-rpi/contracts build \
+ && pnpm --filter @home-rpi/menu-order-generator build \
  && pnpm --filter @home-rpi/rpi-vpn-manager build
 
 # ---- runtime: nginx sin privilegios (usuario nginx, puertos 8080/8081) ----

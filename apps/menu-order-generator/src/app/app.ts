@@ -1,12 +1,9 @@
-import { Component, signal } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import { Component } from '@angular/core';
+import { MenuOrderPage } from './menu-order/menu-order-page';
 
 @Component({
-  imports: [RouterOutlet],
+  imports: [MenuOrderPage],
   selector: 'app-root',
-  styleUrl: './app.scss',
-  templateUrl: './app.html',
+  template: '<app-menu-order-page />',
 })
-export class App {
-  protected readonly title = signal('menu-order-generator');
-}
+export class App {}

@@ -1,2 +1,10 @@
-/* You can add global styles to this file, and also import other style files */
+@use "@fontsource-variable/inter";
+
+// Tema claro/oscuro según la preferencia del dispositivo (Bootstrap 5.3).
+$color-mode-type: media-query;
+
 @import "bootstrap/scss/bootstrap";
+
+:root {
+  --bs-body-font-family: "Inter Variable", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}

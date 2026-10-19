@@ -12,10 +12,11 @@ Monorepo pnpm para gestionar un Raspberry Pi desde la red local:
 - API Fastify + SQLite (fases 3–4).
 - `docker/` → despliegue Docker (fase 5).
 
-Estado (auditado en fase 5; Docker aún no ejecutado): dos apps Angular de scaffold sin lógica de negocio — `menu-order-generator`
-(puerto 4200) y `rpi-vpn-manager` (puerto 4201); más la API Fastify + SQLite en `apps/api`
+Estado (auditado en fase 5; Docker aún no ejecutado): `menu-order-generator` (puerto 4200) tiene ya
+la pantalla de pedidos (ver sección "Frontend menu-order-generator"); `rpi-vpn-manager` (puerto 4201) sigue
+siendo scaffold sin lógica; más la API Fastify + SQLite en `apps/api`
 (rutas `GET /api/health` y CRUD `/api/menus`) y el paquete compartido `packages/contracts`. Sigue sin haber
-VPN real ni lógica de negocio: no inventar apps, scripts, lógica ni estructura que no exista.
+VPN real ni lógica de negocio en rpi-vpn-manager: no inventar apps, scripts, lógica ni estructura que no exista.
 
 ## Entorno verificado (a fecha 2026-10-17)
 
@@ -35,7 +36,7 @@ VPN real ni lógica de negocio: no inventar apps, scripts, lógica ni estructura
 
 ```
 home-rpi/
-├── apps/menu-order-generator/    # @home-rpi: Angular 22.2.3 + Bootstrap 5.3.8/Sass; ng serve en 4200
+├── apps/menu-order-generator/    # @home-rpi: Angular 22.2.3 + Bootstrap 5.3.8/Sass + Inter; ng serve en 4200
 ├── apps/rpi-vpn-manager/         # idem (scaffold espejo); ng serve en 4201 (angular.json)
 ├── apps/api/                     # @home-rpi/api: Fastify 5.12.7 + sqlite3 5.1.1; src→dist con tsc
 ├── packages/.gitkeep             # librerías TS compartidas (sin uso aún)
@@ -99,6 +100,47 @@ y de los binarios sqlite3 5.1.1 `napi-v6` linux glibc/musl x64/arm64 (HTTP 200).
 - Comandos (pendientes de verificar): `pnpm docker:up` (`up -d --build --wait`), `pnpm docker:down`
   (sin `-v`), `pnpm test:integration` (proyecto aislado `home-rpi-it`, puertos 18080/18081 o
   `IT_MENU_PORT`/`IT_VPN_PORT`; solo hace `down -v` sobre ese proyecto).
+
+## Frontend menu-order-generator
+
+Estructura por carpetas, generada con `ng g c` / `ng g s` (un directorio por componente o servicio,
+con `.ts`, `.html`, `.scss` y `.spec.ts`; Angular 22 genera `@Service()`, que se provee en root):
+
+```
+src/app/
+├── menu-order/menu-order-page.*     # pantalla contenedora (standalone, signals)
+└── shared/
+    ├── menu-selector/ product-table/ order-summary/   # componentes presentacionales
+    ├── menus/menus.service.ts       # GET /api/menus
+    ├── share/share.service.ts       # compartir/copiar
+    └── order/order.ts               # lógica pura del pedido (+ spec)
+```
+
+Para añadir piezas usa la CLI desde `apps/menu-order-generator` (con `NG_CLI_ANALYTICS=false`):
+`pnpm exec ng g c shared/<nombre>` y `pnpm exec ng g s shared/<nombre>/<nombre> --type=service`
+(el `--type=service` conserva el sufijo `.service` y la clase `XService`).
+
+- `menu-order-page` es el **único contenedor**: carga menús y posee el estado (menú elegido +
+  `quantities[]` paralelo a `menu.products`). Líneas y total son `computed()`; no hay total propio.
+  `menu-selector`, `product-table` y `order-summary` son presentacionales (`input()`/`output()`,
+  sin HTTP ni estado propio). Lógica pura y testeable en `shared/order/order.ts`; `shared/` no
+  debe importar nada de `menu-order/`.
+- API: `MenusService` hace `GET /api/menus` con URL **relativa**. En dev la resuelve `proxy.conf.json`
+  (→ `127.0.0.1:3000`, enlazado en `angular.json`); en Docker, el proxy de nginx. Valida en runtime
+  la forma `Menu[]` y lanza `MenusContractError` si no cumple (no se maquilla).
+- Contratos: `import type { Menu, MenuProduct } from '@home-rpi/contracts'` (dependencia `workspace:*`).
+  Solo tipos: la app no empaqueta `typebox`. Requiere `packages/contracts/dist` compilado
+  (`pnpm build` raíz lo hace en orden; `docker/web.Dockerfile` compila contracts antes). Si cambias
+  un contrato, recompílalo antes de testear/compilar el frontend. Ojo: el campo del nombre es `product`.
+- Compartir (`ShareService`): `navigator.share` solo con puntero táctil (`pointer: coarse`) y en contexto
+  seguro (HTTPS/localhost; ver `https.md`); si no, o si falla, Clipboard API, luego `execCommand('copy')`
+  (funciona por HTTP) y, si también falla, textarea de respaldo. Cancelar (`AbortError`) no es error.
+- Estilos: Bootstrap + Inter autoalojada (`@fontsource-variable/inter`, sin CDN); tema claro/oscuro
+  por `$color-mode-type: media-query` en `styles.scss`. No hay Bootstrap Icons instalado.
+- Tests: `menu-order/menu-order-page.spec.ts` (integración del contenedor con `HttpTestingController` y `ShareService`
+  simulado) y un `.spec.ts` por componente, servicio y `order.ts` (8 archivos, incl. `app.spec.ts` mínimo). Verificado: 29 tests +
+  `pnpm build` OK. **No se ha revisado visualmente
+  en navegador** ni probado `navigator.share` en un móvil real.
 
 ## Ampliar el proyecto
 

@@ -1,0 +1,12 @@
+<label for="menu-select" class="form-label fw-semibold">Comercio</label>
+<select
+  id="menu-select"
+  class="form-select form-select-lg"
+  [value]="selectedId() ?? ''"
+  (change)="menuSelected.emit($any($event.target).value)"
+>
+  <option value="" [selected]="selectedId() === null">Selecciona un comercio</option>
+  @for (menu of menus(); track menu.id) {
+    <option [value]="menu.id" [selected]="menu.id === selectedId()">{{ menu.commerce }}</option>
+  }
+</select>

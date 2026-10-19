@@ -1,0 +1,21 @@
+<section class="card" aria-labelledby="order-title">
+  <div class="card-body">
+    <h2 id="order-title" class="h6 fw-semibold">Pedido actual</h2>
+    @if (lines().length === 0) {
+      <p class="text-body-secondary mb-0">Aún no has seleccionado productos.</p>
+    } @else {
+      <ul class="list-unstyled mb-0">
+        @for (line of lines(); track $index) {
+          <li class="d-flex justify-content-between gap-3">
+            <span class="text-break">{{ line.quantity }}x {{ line.product.product }}</span>
+            <span class="text-nowrap">{{ formatPrice()(line.amount) }}</span>
+          </li>
+        }
+      </ul>
+    }
+  </div>
+</section>
+<p class="fw-semibold mt-3 mb-3">Total a pagar: <span data-testid="total">{{ formatPrice()(total()) }}</span></p>
+<button type="button" class="btn btn-success btn-lg w-100" [disabled]="lines().length === 0" (click)="share.emit()">
+  Compartir pedido
+</button>

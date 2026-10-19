@@ -1,0 +1,60 @@
+<main class="container py-3 py-md-4 page">
+  <h1 class="h3 fw-bold border rounded p-3 mb-3">Pedidos</h1>
+
+  @switch (state()) {
+    @case ('loading') {
+      <div class="d-flex align-items-center gap-2" role="status">
+        <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+        <span>Cargando menús…</span>
+      </div>
+    }
+    @case ('error') {
+      <div class="alert alert-danger d-flex flex-wrap align-items-center gap-3" role="alert">
+        <span>{{ errorMessage() }}</span>
+        <button type="button" class="btn btn-outline-danger btn-sm" (click)="loadMenus()">Reintentar</button>
+      </div>
+    }
+    @case ('ready') {
+      @if (menus().length === 0) {
+        <div class="alert alert-info" role="status">No hay menús disponibles todavía.</div>
+      } @else {
+        <div class="row g-3 g-lg-4">
+          <div class="col-12 col-lg-7">
+            <app-menu-selector [menus]="menus()" [selectedId]="selectedId()" (menuSelected)="selectMenu($event)" />
+            @if (selectedMenu(); as menu) {
+              <div class="card mt-3">
+                <div class="card-body p-2 p-md-3">
+                  <app-product-table
+                    [products]="menu.products"
+                    [quantities]="quantities()"
+                    [formatPrice]="formatPrice"
+                    (quantityChange)="changeQuantity($event)"
+                  />
+                </div>
+              </div>
+            }
+          </div>
+          <div class="col-12 col-lg-5">
+            <app-order-summary
+              [lines]="lines()"
+              [total]="total()"
+              [formatPrice]="formatPrice"
+              (share)="sharePedido()"
+            />
+            <div aria-live="polite">
+              @if (notice(); as n) {
+                <div [class]="'alert alert-' + n.kind + ' mt-3 mb-0'" [attr.role]="n.kind === 'danger' ? 'alert' : 'status'">
+                  {{ n.text }}
+                </div>
+              }
+            </div>
+            @if (fallbackText(); as text) {
+              <label for="fallback-text" class="form-label mt-3">Texto del pedido</label>
+              <textarea id="fallback-text" class="form-control" rows="6" readonly [value]="text" (focus)="$any($event.target).select()"></textarea>
+            }
+          </div>
+        </div>
+      }
+    }
+  }
+</main>
