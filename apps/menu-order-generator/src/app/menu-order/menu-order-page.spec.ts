@@ -97,7 +97,7 @@ describe('MenuOrderPage', () => {
     expect(share().disabled).toBe(false);
 
     await click(f, share());
-    expect(shareMock.share).toHaveBeenCalledWith(expect.stringContaining('2x Pizza\n1x Pasta'), 'Pedido Pepezolano');
+    expect(shareMock.share).toHaveBeenCalledWith('2x Pizza\n1x Pasta', 'Pedido Pepezolano');
     expect(el(f).textContent).toContain('copiado al portapapeles');
 
     await choose(f, 'id-2');

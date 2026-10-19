@@ -71,7 +71,7 @@ export class MenuOrderPage implements OnInit {
     const menu = this.selectedMenu();
     const lines = this.lines();
     if (!menu || lines.length === 0) return;
-    const text = buildShareText(lines, this.formatPrice(this.total()));
+    const text = buildShareText(lines);
     this.clearFeedback();
     const result = await this.shareService.share(text, `Pedido ${menu.commerce}`);
     switch (result) {

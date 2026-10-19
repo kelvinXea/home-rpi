@@ -29,10 +29,7 @@ export function orderTotal(lines: readonly OrderLine[]): number {
   return lines.reduce((sum, line) => sum + line.amount, 0);
 }
 
-/** Texto compartible: una línea `Nx Producto` por producto y total. */
-export function buildShareText(lines: readonly OrderLine[], formattedTotal: string): string {
-  return [
-    ...lines.map((l) => `${l.quantity}x ${l.product.product}`),
-    `Total: ${formattedTotal}`,
-  ].join('\n');
+/** Texto compartible: una línea `Nx Producto` por producto seleccionado. */
+export function buildShareText(lines: readonly OrderLine[]): string {
+  return lines.map((l) => `${l.quantity}x ${l.product.product}`).join('\n');
 }

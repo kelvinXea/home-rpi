@@ -33,7 +33,7 @@ describe('order', () => {
   });
 
   it('texto compartido con formato Nx Producto', () => {
-    const text = buildShareText(orderLines(menu, [5, 2, 0]), '27.500');
-    expect(text).toBe('5x Producto 1\n2x Producto 2\nTotal: 27.500');
+    const text = buildShareText(orderLines(menu, [5, 2, 0]));
+    expect(text).toBe('5x Producto 1\n2x Producto 2');
   });
 });
