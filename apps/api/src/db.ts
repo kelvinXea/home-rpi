@@ -46,9 +46,10 @@ export class SqliteDb {
   run(sql: string, params: unknown[] = []): Promise<RunResult> {
     return new Promise((resolve, reject) => {
       if (this.closed) return reject(new Error("database closed"));
-      this.db.run(sql, ...params, (err: Error | null, row?: RunResult) => {
+      // node-sqlite3 entrega lastID/changes en `this` del callback, no como argumento.
+      this.db.run(sql, ...params, function (this: RunResult, err: Error | null) {
         if (err) return reject(err);
-        resolve(row as RunResult);
+        resolve(this);
       });
     });
   }

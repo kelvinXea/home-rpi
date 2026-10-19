@@ -12,6 +12,8 @@
     "test": "node --test dist/test/*.js"
   },
   "dependencies": {
+    "@fastify/swagger": "9.9.2",
+    "@fastify/swagger-ui": "6.1.2",
     "@fastify/type-provider-typebox": "6.3.0",
     "@home-rpi/contracts": "workspace:*",
     "ajv-formats": "3.0.1",

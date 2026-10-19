@@ -2,6 +2,11 @@ import Fastify, { type FastifyInstance } from "fastify";
 import { registerAjvFormats, TypeBoxValidatorCompiler } from "@fastify/type-provider-typebox";
 import type { SqliteDb } from "./db.ts";
 import { HealthRepository } from "./health/health.repository.ts";
+import swagger from "@fastify/swagger";
+import swaggerUi from "@fastify/swagger-ui";
+import { MenusRepository } from "./menus/menus.repository.ts";
+import { registerMenusRoutes } from "./menus/menus.routes.ts";
+import { MenusService } from "./menus/menus.service.ts";
 import { registerHealthRoutes } from "./health/health.routes.ts";
 import { HealthService } from "./health/health.service.ts";
 
@@ -60,7 +65,21 @@ export function buildApp({ db, logLevel = "info" }: BuildAppOptions): FastifyIns
     reply.status(500).send({ statusCode: 500, error: "Internal Server Error" });
   });
 
-  registerHealthRoutes(app, new HealthService(new HealthRepository(db)));
+  // OpenAPI a partir de los schemas de las rutas. Bajo /api para que el proxy
+  // nginx (location /api/) también lo exponga. Se registra antes que las rutas.
+  app.register(swagger, {
+    openapi: {
+      info: { title: "home-rpi API", version: "0.0.0" },
+      tags: [{ name: "menus", description: "CRUD de menús de menu-order-generator" }],
+    },
+  });
+  app.register(swaggerUi, { routePrefix: "/api/docs" });
+
+  // after(): las rutas se declaran cuando swagger ya está cargado y puede capturarlas.
+  app.after(() => {
+    registerHealthRoutes(app, new HealthService(new HealthRepository(db)));
+    registerMenusRoutes(app, new MenusService(new MenusRepository(db)));
+  });
 
   return app;
 }

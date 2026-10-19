@@ -66,7 +66,8 @@ capa. Imports relativos con extensión `.ts`.
    `version` consecutiva (2, 3, ...), `name` `"000N_<descripcion>"` y `statements` SQL.
    Se aplican una vez, en orden; no edites migraciones ya aplicadas.
 6. **Contrato**: si el schema lo consumen también los frontends u otro paquete, defínelo en
-   `packages/contracts/src/index.ts` (TypeBox, `Static<>` para el tipo) y ejecuta
+   `packages/contracts/src/<dominio>/` (TypeBox, `Static<>` para el tipo; reexpórtalo en el
+   `index.ts` del dominio y en `src/index.ts`) y ejecuta
    `pnpm --filter @home-rpi/contracts build` (la API lee `dist`). Si solo lo usa la API,
    déjalo en el módulo. `contracts` no puede importar Angular ni Fastify.
 7. **Pruebas** `apps/api/src/test/<dominio>.test.ts` (`node:test`): crea una base temporal

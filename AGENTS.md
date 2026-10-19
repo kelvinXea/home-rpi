@@ -14,7 +14,7 @@ Monorepo pnpm para gestionar un Raspberry Pi desde la red local:
 
 Estado (auditado en fase 5; Docker aún no ejecutado): dos apps Angular de scaffold sin lógica de negocio — `menu-order-generator`
 (puerto 4200) y `rpi-vpn-manager` (puerto 4201); más la API Fastify + SQLite en `apps/api`
-(única ruta `GET /api/health`) y el paquete compartido `packages/contracts`. Sigue sin haber
+(rutas `GET /api/health` y CRUD `/api/menus`) y el paquete compartido `packages/contracts`. Sigue sin haber
 VPN real ni lógica de negocio: no inventar apps, scripts, lógica ni estructura que no exista.
 
 ## Entorno verificado (a fecha 2026-10-17)
@@ -62,11 +62,14 @@ cierre ordenado con onClose + SIGINT/SIGTERM, conexión cerrada una sola vez) �
 (rutas bajo `/api`, validación runtime de peticiones y respuestas vía TypeBox, error handler
 propio que no filtra errores de validación 400) → `db.ts` (wrapper promise sobre sqlite3;
 PRAGMAs `foreign_keys=1`, `journal_mode=WAL`, `busy_timeout=5000`) + `migrations.ts`.
-Módulo real: `src/health/` (`health.routes.ts` → `health.service.ts` → `health.repository.ts`; convención
-`src/<dominio>/`, no `src/modules/`). Aún sin tablas de dominio: la migración 0001 solo fija
-`PRAGMA user_version = 1` (mecanismo idempotente con tabla `schema_migrations`).
+Módulos reales: `src/health/` y `src/menus/` (`health.routes.ts` → `health.service.ts` → `health.repository.ts`; convención
+`src/<dominio>/`, no `src/modules/`). Migraciones (idempotentes, tabla `schema_migrations`): 0001 fija `user_version = 1`; 0002 crea
+`menus` (`id` TEXT PK uuid generado por el backend, `commerce`, `products` como JSON en TEXT).
 
-- Contratos en `packages/contracts`: un único `HealthResponse` ({status, database, timestamp}).
+- Contratos en `packages/contracts`: `HealthResponse`, y para menús `MenuProduct`, `MenuInput`, `Menu`,
+  `MenuIdParams`, `ErrorResponse` (`price` entero >= 0, `additionalProperties: false`).
+- OpenAPI/Swagger (`@fastify/swagger` 9.9.2 + `@fastify/swagger-ui` 6.1.2): UI en `/api/docs`,
+  especificación en `/api/docs/json` (y `/yaml`); se generan de los schemas de las rutas.
   Biblioteca de schemas elegida: **TypeBox** — es el type provider oficial de Fastify
   (`@fastify/type-provider-typebox`), así los schemas se validan sin convertir a JSON Schema;
   con Zod haría falta un adaptador/conversión extra. El paquete no importa ni Angular ni

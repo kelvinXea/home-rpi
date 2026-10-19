@@ -8,7 +8,7 @@ interface Migration {
 
 /**
  * Mecanismo mínimo de migraciones: tabla `schema_migrations`, aplicadas en
- * orden y una sola vez (idempotente). Sin tablas de dominio todavía.
+ * orden y una sola vez (idempotente). 
  */
 const MIGRATIONS: Migration[] = [
   {
@@ -17,6 +17,22 @@ const MIGRATIONS: Migration[] = [
     // Marcador no-domain: hace observable la migración (PRAGMA user_version)
     // sin crear tablas de negocio.
     statements: ["PRAGMA user_version = 1;"],
+  },
+  {
+    version: 2,
+    name: "0002_menus",
+    // `products` guarda el arreglo de productos como JSON (TEXT): suficiente
+    // para el CRUD inicial; se normalizará en tabla propia si hace falta consultar por producto.
+    statements: [
+      `CREATE TABLE IF NOT EXISTS menus (
+         id TEXT PRIMARY KEY,
+         commerce TEXT NOT NULL,
+         products TEXT NOT NULL,
+         created_at TEXT NOT NULL DEFAULT (datetime('now')),
+         updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+       )`,
+      "PRAGMA user_version = 2;",
+    ],
   },
 ];
 

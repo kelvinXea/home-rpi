@@ -24,14 +24,14 @@ test("las migraciones se aplican una sola vez (idempotentes)", async () => {
   try {
     const first = await SqliteDb.open(dbPath);
     let applied = await runMigrations(first);
-    assert.equal(applied, 1);
+    assert.equal(applied, 2);
 
     // Segunda ejecución sobre la misma conexión: nada que aplicar.
     applied = await runMigrations(first);
     assert.equal(applied, 0);
 
     const version = await first.get<{ user_version: number }>("PRAGMA user_version");
-    assert.equal(version?.user_version, 1);
+    assert.equal(version?.user_version, 2);
     await first.close();
 
     // Tercera ejecución tras reabrir el mismo fichero: persiste el estado.
@@ -53,6 +53,9 @@ test("schema_migrations registra la versión y el nombre aplicados", async () =>
     const rows = await db.all<{ version: number; name: string }>(
       "SELECT version, name FROM schema_migrations ORDER BY version",
     );
-    assert.deepEqual(rows, [{ version: 1, name: "0001_initial" }]);
+    assert.deepEqual(rows, [
+      { version: 1, name: "0001_initial" },
+      { version: 2, name: "0002_menus" },
+    ]);
   });
 });
