@@ -12,7 +12,7 @@ Monorepo pnpm para gestionar un Raspberry Pi desde la red local:
 - API Fastify + SQLite (fases 3–4).
 - `docker/` → despliegue Docker (fase 5).
 
-Estado fase 3: dos apps Angular de scaffold sin lógica de negocio — `menu-order-generator`
+Estado (auditado en fase 5; Docker aún no ejecutado): dos apps Angular de scaffold sin lógica de negocio — `menu-order-generator`
 (puerto 4200) y `rpi-vpn-manager` (puerto 4201); más la API Fastify + SQLite en `apps/api`
 (única ruta `GET /api/health`) y el paquete compartido `packages/contracts`. Sigue sin haber
 VPN real ni lógica de negocio: no inventar apps, scripts, lógica ni estructura que no exista.
@@ -62,7 +62,8 @@ cierre ordenado con onClose + SIGINT/SIGTERM, conexión cerrada una sola vez) �
 (rutas bajo `/api`, validación runtime de peticiones y respuestas vía TypeBox, error handler
 propio que no filtra errores de validación 400) → `db.ts` (wrapper promise sobre sqlite3;
 PRAGMAs `foreign_keys=1`, `journal_mode=WAL`, `busy_timeout=5000`) + `migrations.ts`.
-Aún sin capa de servicios ni tablas de dominio: la migración 0001 solo fija
+Módulo real: `src/health/` (`health.routes.ts` → `health.service.ts` → `health.repository.ts`; convención
+`src/<dominio>/`, no `src/modules/`). Aún sin tablas de dominio: la migración 0001 solo fija
 `PRAGMA user_version = 1` (mecanismo idempotente con tabla `schema_migrations`).
 
 - Contratos en `packages/contracts`: un único `HealthResponse` ({status, database, timestamp}).
@@ -96,12 +97,17 @@ y de los binarios sqlite3 5.1.1 `napi-v6` linux glibc/musl x64/arm64 (HTTP 200).
   (sin `-v`), `pnpm test:integration` (proyecto aislado `home-rpi-it`, puertos 18080/18081 o
   `IT_MENU_PORT`/`IT_VPN_PORT`; solo hace `down -v` sobre ese proyecto).
 
+## Ampliar el proyecto
+
+Nuevas apps Angular y nuevos módulos de dominio de la API: ver [docs/extending.md](docs/extending.md).
+
 ## Convenciones
 
 1. Los paquetes del workspace se llaman `@home-rpi/<nombre>` y son `"private": true`.
 2. TypeScript estricto: cada app hereda `tsconfig.base.json` (strict, noImplicitOverride,
    noFallthroughCasesInSwitch, forceConsistentCasingInFileNames) y define su propio
-   `target`, `module`, `outDir`. No aflojar opciones en la base ni meter ahí opciones
+   `target`, `module`, `outDir`. Excepción verificada: las apps Angular usan `typescript` 6.0.3
+   (peer de `@angular/compiler-cli` 22.2.3: `>=6.0 <6.1`); raíz, api y contracts usan 7.0.2. No aflojar opciones en la base ni meter ahí opciones
    específicas de Angular/Fastify.
 3. Versiones exactas siempre: sin `^`/`~` en devDependencies, packageManager o engines.
    Tras tocar dependencias: `pnpm install` para actualizar el lockfile raíz.

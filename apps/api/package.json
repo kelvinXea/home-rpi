@@ -2,7 +2,7 @@
   "name": "@home-rpi/api",
   "version": "0.0.0",
   "private": true,
-  "description": "API Fastify + SQLite para home-rpi (fase 3)",
+  "description": "API Fastify + SQLite para home-rpi",
   "type": "module",
   "main": "./dist/server.js",
   "scripts": {

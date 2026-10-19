@@ -2,7 +2,7 @@
   "name": "@home-rpi/root",
   "version": "0.0.0",
   "private": true,
-  "description": "Workspace raiz del monorepo home-rpi (pnpm). Configuracion compartida minima; las apps se anaden en fases posteriores.",
+  "description": "Workspace raiz del monorepo home-rpi (pnpm): configuracion compartida y scripts.",
   "packageManager": "pnpm@12.14.0",
   "engines": {
     "node": "24.22.0"
